@@ -1,0 +1,31 @@
+{
+  "name": "space-beat-three",
+  "version": "0.0.1",
+  "description": "Space game made in Phaser",
+  "main": "src/game.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MantarayAR/space-beat-three.git"
+  },
+  "keywords": [
+    "javascript",
+    "npm",
+    "circuits"
+  ],
+  "author": "Ivan Montiel <idmontie@asu.edu> (https://github.com/idmontie)",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/MantarayAR/space-beat-three/issues"
+  },
+  "homepage": "https://github.com/MantarayAR/space-beat-three#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "browser-sync": "^2.9.3"
+  }
+}
