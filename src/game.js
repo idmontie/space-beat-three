@@ -1,10 +1,10 @@
 var defaults = {
   width: 600,
   height: 800,
-  parallaxSpeed: 0.4,
-  maxSpeed: 200,
-  boostSpeed: 400,
-  boostFrames: 4,
+  parallaxSpeed: 0.8,
+  maxSpeed: 120,
+  boostSpeed: 240,
+  boostFrames: 1,
 };
 
 /*
@@ -32,6 +32,55 @@ var isLeftDoubleTap  = false;
 var isRightDoubleTap = false;
 var lastTap          = 0;
 var cooldown         = 0;
+var music, burst;
+
+
+/*
+ |-------------------------
+ | Combos
+ |-------------------------
+ */
+ // TODO add a handler that interprets
+ // button presses and determines the
+ // correct move
+var combos = [
+// TODO left
+// TODO right
+// TODO fire
+  {
+    name: "Burst Right",
+    combo: ["Right", "Right"],
+    callback: function() {
+      player.body.velocity.x = defaults.boostSpeed;
+      player.play('right');
+    
+      burst.play();
+      cooldown = 1;
+    }
+  },
+  {
+    name: "Burst Left",
+    combo: ["Left", "Left"],
+    callback: function() {
+      player.body.velocity.x = -defaults.boostSpeed;
+      player.play('left');
+    
+      burst.play();
+      cooldown = 1;
+    }
+  },
+  {
+    name: "Quick Burst",
+    combo: ["Up", "Up", "Fire"],
+    callback: function() {
+      player.body.velocity.x = -defaults.boostSpeed;
+      player.play('left');
+    
+      burst.play();
+      cooldown = 1;
+    }
+  }
+];
 
 /*
  |-------------------------
@@ -50,6 +99,9 @@ function preload() {
     95,
     151
   );
+
+  game.load.audio('background', ['assets/music/temp-music.mp3', 'assets/music/temp-music.ogg']);
+  game.load.audio('burst', ['assets/sounds/burst.wav']);
 }
 
 /*
@@ -92,21 +144,37 @@ function create() {
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
   cursors.left.onDown.add( doubleClick, this );
   cursors.right.onDown.add( doubleClick, this );
+
+  // Music
+  music = game.add.audio('background');
+  music.loopFull(1);
+  music.play();
+
+  // Sounds
+  burst = game.add.audio('burst');
+  burst.volume = 0.5;
 }
 
 function doubleClick( item ) {
   var now = +new Date();
-  var diff = now - lastTap;
+  var diff = now - lastTap.time;
 
   if ( diff < 600 && diff > 0 ) {
-    if ( item.event.keyIdentifier === 'Left' ) {
+    if ( item.event.keyIdentifier === 'Left' &&
+         lastTap.dir === 'Left' ) {
       isLeftDoubleTap = true;
-    } else if ( item.event.keyIdentifier === 'Right' ) {
+    } else if ( item.event.keyIdentifier === 'Right' &&
+         lastTap.dir === 'Right' ) {
       isRightDoubleTap = true;
+    } else {
+      lastTap = { time : +new Date(), dir : 'none'}
     }
   }
 
-  lastTap = +new Date();
+  lastTap = {
+    time: +new Date(),
+    dir: item.event.keyIdentifier
+  };
 }
 
 
@@ -126,28 +194,38 @@ function update() {
   _.each(background, function( b, i ) {
     b.tilePosition.y += (i + 1) * parallaxSpeed;
   });
-
   
 
   // Handle player input
   if (player.alive) {
-    if (isLeftDoubleTap && cooldown === 0) {
-      player.body.velocity.x = -defaults.boostSpeed;
-      player.play('left');
-      isLeftDoubleTap = false;
-      cooldown        = defaults.boostFrames;
-    }
-    else if (isRightDoubleTap && cooldown === 0) {
-      player.body.velocity.x = defaults.boostSpeed;
-      player.play('right');
+    if (isLeftDoubleTap || isRightDoubleTap) {
+      if (cooldown === 0) {
+        var factor = defaults.boostSpeed;
+        factor = isLeftDoubleTap ? -factor : factor;
+        
+        player.body.velocity.x = factor;
+
+        if ( isLeftDoubleTap ) {
+          player.play('left');
+        } else {
+          player.play('right');
+        }
+        
+        cooldown        = defaults.boostFrames;
+        
+        burst.play();
+      }
+
       isRightDoubleTap = false;
-      cooldown         = defaults.boostFrames;
+      isLeftDoubleTap = false;
     }
     else if (cursors.left.isDown) {
       tempSpeed = player.body.velocity.x;
       tempSpeed -= 10;
 
-      tempSpeed = Math.max( tempSpeed, -defaults.maxSpeed );
+      if ( cooldown === 0 ) {
+        tempSpeed = Math.max( tempSpeed, -defaults.maxSpeed );
+      }
       player.body.velocity.x = tempSpeed;
       player.play('left');
     }
@@ -155,7 +233,9 @@ function update() {
       tempSpeed = player.body.velocity.x;
       tempSpeed += 10;
 
-      tempSpeed = Math.min( tempSpeed, defaults.maxSpeed );
+      if ( cooldown === 0 ) {
+        tempSpeed = Math.min( tempSpeed, defaults.maxSpeed );
+      }
       player.body.velocity.x = tempSpeed;
       player.play('right');
     } else {
@@ -176,14 +256,17 @@ function update() {
             player.body.velocity.x = tempSpeed;
           }
         }
-      } else {
-        cooldown--;
-        cooldown = cooldown < 0 ? 0 : cooldown;
       }
       
       player.play('init');
     }
   }
+
+  var deltaTime = game.time.elapsed / 1000;
+
+  if ( cooldown > 0 )
+    cooldown -= deltaTime;
+  cooldown = cooldown < 0 ? 0 : cooldown;
 }
 
 

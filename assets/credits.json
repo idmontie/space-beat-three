@@ -1,5 +1,8 @@
 {
   "graphics" : [
     "MillionthVector"
+  ],
+  "sounds" : [
+    "CosmicD"
   ]
 }
