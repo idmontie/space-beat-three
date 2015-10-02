@@ -6,8 +6,10 @@ var defaults = {
   boostSpeed: 240,
   boostFrames: 1,
   maxNumberOfEnemies: 10,
+  maxNumberOfMidEnemies: 2,
   enemySpawnRate: 100,
-  playerHealth: 100
+  playerHealth: 100,
+  stage2Ticks: 0
 };
 
 /*
@@ -29,7 +31,9 @@ var game = new Phaser.Game(defaults.width, defaults.height, Phaser.AUTO, 'game',
 var background    = [];
 var animations    = {};
 var player        = null;
-var enemies       = [];
+var enemies       = [],
+    midEnemies    = [];
+var largeEnemies  = [];
 var enemySpawnRate = defaults.enemySpawnRate;
 var parallaxSpeed = defaults.parallaxSpeed;
 var cursors;
@@ -39,10 +43,11 @@ var isRightDoubleTap = false;
 var lastTap          = 0;
 var cooldown         = 0;
 var music, burst, laser, smallExplode;
-var bullets, enemyBullets;
+var bullets, enemyBullets, enemyMissiles, enemyMissileFired =[];
 var bulletTime = 0;
 var random = new Phaser.RandomDataGenerator(+new Date());
 var playerHealth = defaults.playerHealth;
+var ticks = 0;
 
 /*
  |-------------------------
@@ -121,6 +126,12 @@ function preload() {
     64
   );
   game.load.spritesheet(
+    'enemy-mid',
+    'assets/sprites/enemy0001.png',
+    85,
+    85
+  );
+  game.load.spritesheet(
     'enemy-beam',
     'assets/sprites/enemy-beam-spritesheet.png',
     7,
@@ -137,6 +148,12 @@ function preload() {
     'assets/sprites/small-explosion-spritesheet.png',
     9,
     13
+  );
+  game.load.spritesheet(
+    'missile',
+    'assets/sprites/missile-spritesheet.png',
+    14,
+    11
   );
 
   game.load.audio('background', ['assets/music/temp-music.mp3', 'assets/music/temp-music.ogg']);
@@ -180,6 +197,16 @@ function create() {
   enemyBullets.setAll('anchor.y', 0.5);
   enemyBullets.setAll('outOfBoundsKill', true);
   enemyBullets.setAll('checkWorldBounds', true);
+
+  // Enemy missiles (bullets before player for layering)
+  enemyMissiles = game.add.group();
+  enemyMissiles.enableBody = true;
+  enemyMissiles.physicsBodyType = Phaser.Physics.ARCADE;
+  enemyMissiles.createMultiple(30, 'missile');
+  enemyMissiles.setAll('anchor.x', 0.5);
+  enemyMissiles.setAll('anchor.y', 0.5);
+  enemyMissiles.setAll('outOfBoundsKill', true);
+  enemyMissiles.setAll('checkWorldBounds', true);
 
   // Create starfighter
   player = game.add.sprite(
@@ -360,12 +387,13 @@ function update() {
 
   //  Run collision
   game.physics.arcade.overlap(bullets, enemies, collisionHandler, null, this);
+  game.physics.arcade.overlap(bullets, midEnemies, midEnemeyCollisionHandler, null, this);
   game.physics.arcade.overlap(enemyBullets, player, enemyHitsPlayer, null, this);
 }
 
 function fireBullet () {
   //  To avoid them being allowed to fire too fast we set a time limit
-  if ( game.time.now > bulletTime ) {
+  if ( player.alive && game.time.now > bulletTime ) {
     //  Grab the first bullet we can from the pool
     bullet = bullets.getFirstExists( false );
     laser.play();
@@ -397,7 +425,20 @@ function handleEnemies() {
   }
 
   rotateEnemiesTowardPlayer();
+  rotateMissilesTowardPlayer();
   enemiesShoot();
+
+  if ( ticks > defaults.stage2Ticks ) {
+    if ( midEnemies.length < defaults.maxNumberOfMidEnemies ) {
+      if ( random.between(0, enemySpawnRate * 10 ) < 1 ) {
+        enemySpawnRate = defaults.enemySpawnRate;
+
+        createMidEnemy();
+      }
+    }
+  }
+
+  ticks++;
 }
 
 function createEnemy() {
@@ -429,6 +470,47 @@ function createEnemy() {
   );
 }
 
+function createMidEnemy() {
+  var enemy = game.add.sprite(
+      random.between( -10, defaults.width + 10 ),
+      random.between( -10, -20 ),
+      'enemy-mid'
+    );
+  enemy.anchor.setTo(0.5, 0.5);
+  enemy.scale.setTo(0.5, 0.5);
+  enemy.angle = 180;
+  game.physics.enable( enemy, Phaser.Physics.ARCADE );
+  var targetY = random.between( 90, 200 );
+  var targetX = random.between( defaults.width / 2 - 50, defaults.width / 2 + 50 )
+  var tweenA = game.add.tween( enemy ).to(
+    { 
+      x: targetX,
+      y: targetY
+    },
+    7000,
+    Phaser.Easing.Sinusoidal.Out,
+    true
+  );
+
+  var tweenB = game.add.tween( enemy ).to(
+    {
+      x: targetX + random.pick( [-20, -10, 10, 20] )
+    },
+    5000,
+    Phaser.Easing.Linear.None,
+    false,
+    0,
+    -1,
+    true
+  );
+
+  tweenA.chain(tweenB);
+
+  midEnemies.push(
+    enemy
+  );
+}
+
 function killEnemy( enemy ) {
   for ( var i = 0; i < enemies.length; i++ ) {
     if ( enemies[ i ] === enemy ) {
@@ -439,7 +521,8 @@ function killEnemy( enemy ) {
   enemy.kill();
 }
 
-function rotateTowardsPlayer( obj, instant, offsetRotation ) {
+function rotateTowardsPlayer( obj, instant, offsetRotation, amount ) {
+  amount = amount ? amount : 5;
   var angle = this.game.math.angleBetween( obj.position.x, obj.position.y, player.position.x, player.position.y ) + offsetRotation;
   var delta = angle - obj.rotation;
 
@@ -453,10 +536,10 @@ function rotateTowardsPlayer( obj, instant, offsetRotation ) {
 
       if (delta > 0) {
         // Turn clockwise
-        obj.angle += 5;
+        obj.angle += amount;
       } else {
         // Turn counter-clockwise
-        obj.angle -= 5;
+        obj.angle -= amount;
       }
 
       // Just set angle to target angle if they are close
@@ -476,11 +559,20 @@ function rotateEnemiesTowardPlayer() {
   }
 }
 
-// TODO another type of enemy that homes in
-// Calculate velocity vector based on this.rotation and this.SPEED
-// this.body.velocity.x = Math.cos(this.rotation) * this.SPEED;
-// this.body.velocity.y = Math.sin(this.rotation) * this.SPEED;
+function rotateMissilesTowardPlayer() {
+  for( var i = 0; i < enemyMissileFired.length; i++ ) {
+    var missile = enemyMissileFired[i];
 
+    rotateTowardsPlayer( missile, false, 0, 1 );
+    var newX = ( missile.body.velocity.x + Math.cos( missile.rotation ) * 100 ) / 2.0;
+    var newY = ( missile.body.velocity.y + Math.sin( missile.rotation ) * 300 ) / 2.0;
+
+    missile.body.velocity.x = newX;
+    missile.body.velocity.y = Math.max( 100, newY );
+
+    // TODO kill missiles when they lose too much y velocity
+  }
+}
 
 function enemiesShoot() {
   for( var i = 0; i < enemies.length; i++ ) {
@@ -499,6 +591,44 @@ function enemiesShoot() {
         rotateTowardsPlayer( enemyBullet, true, 0 );
         enemyBullet.body.velocity.x = Math.cos( enemyBullet.rotation ) * 300;
         enemyBullet.body.velocity.y = Math.sin( enemyBullet.rotation ) * 300;
+      }
+    }
+  }
+
+  for( var i = 0; i < midEnemies.length; i++ ) {
+    var enemy = midEnemies[i];
+
+    if ( typeof enemy.shootTimer != 'undefined' ) {
+      enemy.shootTimer++;
+    } else {
+      enemy.shootTimer = 0;
+    }
+
+    // MISSILES
+    if ( enemy.alive &&
+         enemy.shootTimer > 500 ) {
+      enemy.shootTimer = 0;
+
+      for ( var firedBullet = 0; firedBullet < 6; firedBullet++ ) {
+        //  Grab the first bullet we can from the pool
+        enemyBullet = enemyMissiles.getFirstExists( false );
+        // TODO different sound
+        laser.play();
+
+        if ( enemyBullet ) {
+          //  And fire it
+          enemyBullet.reset( enemy.x, enemy.y + 8 );
+          enemyBullet.body.velocity.x = 300;
+          if ( firedBullet > 2 ) {
+            enemyBullet.body.velocity.x = -300;
+          }
+
+          enemyBullet.body.velocity.y = -50 + ( firedBullet % 3 ) * 25;
+          enemyBullet.angle = ( 270 + 60 * firedBullet  ) % 360;
+
+          enemyMissileFired.push( enemyBullet );
+          
+        }
       }
     }
   }
@@ -533,6 +663,10 @@ function enemyHitsPlayer(player, bullet) {
     smallExplode.play();
   }
 
+}
+
+function midEnemeyCollisionHandler(enemy, bullet) {
+  // TODO
 }
 
 /*
