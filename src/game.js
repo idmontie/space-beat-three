@@ -9,6 +9,7 @@ var defaults = {
   maxNumberOfMidEnemies: 2,
   enemySpawnRate: 100,
   playerHealth: 100,
+  midEnemyHealth: 100,
   stage2Ticks: 0
 };
 
@@ -387,7 +388,9 @@ function update() {
 
   //  Run collision
   game.physics.arcade.overlap(bullets, enemies, collisionHandler, null, this);
-  game.physics.arcade.overlap(bullets, midEnemies, midEnemeyCollisionHandler, null, this);
+  game.physics.arcade.overlap(bullets, midEnemies, midEnemyCollisionHandler, null, this);
+  game.physics.arcade.overlap(bullets, enemyMissileFired, missileBulletCollisionHandler, null, this);
+  game.physics.arcade.overlap(enemyMissileFired, player, missileHitsPlayer, null, this);
   game.physics.arcade.overlap(enemyBullets, player, enemyHitsPlayer, null, this);
 }
 
@@ -480,6 +483,7 @@ function createMidEnemy() {
   enemy.scale.setTo(0.5, 0.5);
   enemy.angle = 180;
   game.physics.enable( enemy, Phaser.Physics.ARCADE );
+  enemy.health = defaults.midEnemyHealth;
   var targetY = random.between( 90, 200 );
   var targetX = random.between( defaults.width / 2 - 50, defaults.width / 2 + 50 )
   var tweenA = game.add.tween( enemy ).to(
@@ -515,10 +519,50 @@ function killEnemy( enemy ) {
   for ( var i = 0; i < enemies.length; i++ ) {
     if ( enemies[ i ] === enemy ) {
       enemies.splice( i, 1 );
+
+      enemy.kill();
+      var explosion = explosions.getFirstExists(false);
+      explosion.reset(enemy.body.x, enemy.body.y);
+      explosion.play('explode', 30, false, true);
+      smallExplode.play();
+
+      break;
     }
   }
+}
 
-  enemy.kill();
+function killMidEnemy( enemy ) {
+  for ( var i = 0; i < midEnemies.length; i++ ) {
+    if ( midEnemies[ i ] === enemy ) {
+      midEnemies.splice( i, 1 );
+
+      enemy.kill();
+      var explosion = explosions.getFirstExists(false);
+      explosion.reset(enemy.body.x, enemy.body.y);
+      explosion.play('explode', 30, false, true);
+      smallExplode.play();
+
+      break;
+    }
+  }
+}
+
+function killMissile( missile ) {
+  for ( var i = 0; i < enemyMissileFired.length; i++ ) {
+    if ( enemyMissileFired[i] === missile ) {
+      enemyMissileFired.splice( i, 1 );
+
+
+      missile.kill();
+
+      var explosion = explosions.getFirstExists(false);
+      explosion.reset(missile.body.x, missile.body.y);
+      explosion.play('explode', 30, false, true);
+      smallExplode.play();
+
+      break;
+    }
+  }
 }
 
 function rotateTowardsPlayer( obj, instant, offsetRotation, amount ) {
@@ -566,11 +610,14 @@ function rotateMissilesTowardPlayer() {
     rotateTowardsPlayer( missile, false, 0, 1 );
     var newX = ( missile.body.velocity.x + Math.cos( missile.rotation ) * 100 ) / 2.0;
     var newY = ( missile.body.velocity.y + Math.sin( missile.rotation ) * 300 ) / 2.0;
+    var oldY = missile.body.velocity.y;
 
     missile.body.velocity.x = newX;
-    missile.body.velocity.y = Math.max( 100, newY );
+    missile.body.velocity.y = Math.max( oldY, newY );
 
-    // TODO kill missiles when they lose too much y velocity
+    if ( missile.position.y > player.position.y + random.between( 30, 100 ) ) {
+      killMissile( missile );
+    }
   }
 }
 
@@ -637,17 +684,9 @@ function enemiesShoot() {
 function collisionHandler(enemy, bullet) {
   bullet.kill();
   killEnemy( enemy );
-
-  var explosion = explosions.getFirstExists(false);
-  explosion.reset(enemy.body.x, enemy.body.y);
-  explosion.play('explode', 30, false, true);
-  smallExplode.play();
 }
 
-function enemyHitsPlayer(player, bullet) {
-  playerHealth -= 10;
-  bullet.kill();
-
+function checkPlayer( bullet ) {
   if ( playerHealth <= 0 ) {
     player.kill();
 
@@ -662,11 +701,44 @@ function enemyHitsPlayer(player, bullet) {
     explosion.play('explode', 30, false, true);
     smallExplode.play();
   }
-
 }
 
-function midEnemeyCollisionHandler(enemy, bullet) {
-  // TODO
+function checkMidEnemy( enemy, bullet ) {
+  if ( enemy.health <= 0 ) {
+    killMidEnemy( enemy );
+  } else {
+    var explosion = smallExplosions.getFirstExists(false);
+    explosion.reset(bullet.body.x, bullet.body.y);
+    explosion.play('explode', 30, false, true);
+    smallExplode.play();
+  }
+}
+
+function enemyHitsPlayer(player, bullet) {
+  playerHealth -= 10;
+  bullet.kill();
+
+  checkPlayer( bullet );
+}
+
+function midEnemyCollisionHandler(enemy, bullet) {
+  enemy.health -= 20;
+  bullet.kill();
+
+  checkMidEnemy( enemy, bullet );
+}
+
+
+function missileBulletCollisionHandler(missile, bullet) {
+  bullet.kill();
+  killMissile( missile );
+}
+
+function missileHitsPlayer(missile, player) {
+  playerHealth -= 30;
+  killMissile( missile );
+
+  checkPlayer( missile );
 }
 
 /*
