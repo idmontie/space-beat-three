@@ -2,7 +2,7 @@
   "name": "space-beat-three",
   "version": "0.0.1",
   "description": "Space game made in Phaser",
-  "main": "src/game.js",
+  "main": "index.js",
   "directories": {
     "test": "tests"
   },
@@ -25,7 +25,19 @@
   },
   "homepage": "https://github.com/MantarayAR/space-beat-three#readme",
   "devDependencies": {
+    "browser-sync": "^2.9.3",
     "gulp": "^3.9.0",
-    "browser-sync": "^2.9.3"
+    "gulp-browserify": "^0.5.1",
+    "gulp-coverage": "^0.3.36",
+    "gulp-coveralls": "^0.1.4",
+    "gulp-jasmine": "^2.0.1",
+    "gulp-minify": "0.0.5",
+    "gulp-plumber": "^1.0.1",
+    "gulp-rename": "^1.2.2",
+    "replace-loader": "^0.1.0",
+    "require-globify": "^1.3.0",
+    "run-sequence": "^1.1.2",
+    "webpack": "^1.12.2",
+    "webpack-stream": "^2.1.1"
   }
 }
