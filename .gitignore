@@ -1,4 +1,8 @@
 /node_modules/
 .DS_Store
 
-assets/music/temp-*
+dist/assets/music/temp-*
+.coverrun
+/.coverdata/
+/coverage/
+/debug/
