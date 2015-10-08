@@ -119,6 +119,10 @@
 	      health: 100
 	    }
 	  },
+	  player: {
+	    health: 100,
+	    maxSpeed: 120
+	  },
 	  size : {
 	    width: 600,
 	    height: 800
@@ -250,10 +254,11 @@
 	var BackgroundHandler = __webpack_require__( 7 );
 	var PlayerHandler     = __webpack_require__( 9 );
 	var EnemyHandler      = __webpack_require__( 14 );
+	var GuiManager        = __webpack_require__( 17 );
 	var SoundManager      = __webpack_require__( 11 );
-	var ProjectileManager = __webpack_require__( 17 );
-	var ExplosionManager  = __webpack_require__( 18 );
-	var StageManager      = __webpack_require__( 19 );
+	var ProjectileManager = __webpack_require__( 18 );
+	var ExplosionManager  = __webpack_require__( 19 );
+	var StageManager      = __webpack_require__( 20 );
 	var SpriteGenerator   = __webpack_require__( 8 );
 
 	function Game( game ) {
@@ -267,12 +272,13 @@
 	    _backgroundHandler = new BackgroundHandler( this );
 	    _playerHandler     = new PlayerHandler( this );
 	    _enemyHandler      = new EnemyHandler( this );
-
+	    
 	    this.player            = _playerHandler.getPlayer();
 	    this.stageManager      = new StageManager( this );
 	    this.projectileManager = new ProjectileManager( this );
 	    this.soundManager      = new SoundManager( this );
 	    this.explosionManager  = new ExplosionManager( this );
+	    this.guiManager        = new GuiManager( this );
 
 	    SpriteGenerator.create();
 	  };
@@ -583,6 +589,8 @@
 	      }
 
 	      if ( player.entity.alive ) {
+	        game.guiManager.addScore( 0.03 );
+
 	        if ( _burstCooldown === 0 && _notMoving ) {
 	          if ( player.entity.body.velocity.x != 0 ) {
 	            if ( player.entity.body.velocity.x > 0 ) {
@@ -641,6 +649,7 @@
 	    _missileCollisionHandler = ( function ( player ) {
 	      return function ( entity, missile ) {
 	        game.projectileManager.killMissile( missile );
+	        game.guiManager.subtractHealth( 30 );
 	        player.health -= 30;
 	        player.check( missile );
 	      };
@@ -649,6 +658,7 @@
 	    _bulletCollisionHandler = ( function ( player ) {
 	      return function ( entity, bullet ) {
 	        bullet.kill();
+	        game.guiManager.subtractHealth( 10 );
 	        player.health -= 10;
 	        player.check( bullet );
 	      };
@@ -656,6 +666,7 @@
 
 	    _missileBulletCollisionHandler = ( function ( player ) {
 	      return function ( missile, bullet ) {
+	        game.guiManager.addScore( 100 );
 	        bullet.kill();
 	        game.projectileManager.killMissile( missile );
 	      }
@@ -883,11 +894,13 @@
 
 /***/ },
 /* 13 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
+
+	var settings = __webpack_require__( 2 );
 
 	function Player() {
-	  var health      = 100;
-	  var maxSpeed    = 120;
+	  var health      = settings.player.health;
+	  var maxSpeed    = settings.player.maxSpeed;
 	  var boostSpeed  = 240;
 	  var boostFrames = 1;
 
@@ -1025,6 +1038,7 @@
 	  var _collisionHandler = function ( bullet, enemy ) {
 	    bullet.kill();
 	    _killEnemy( enemy );
+	    game.guiManager.addScore( 400 );
 	  }
 
 	  var update = function () {
@@ -1206,18 +1220,24 @@
 	  var _check = function ( enemy, bullet ) {
 	    if ( enemy.health <= 0 ) {
 	      _killEnemy( enemy );
+
+	      return true;
 	    } else {
 	      explosion = game.explosionManager.smallExplosions.getFirstExists( false );
 	      game.soundManager.play( 'smallExplode' );
 	      explosion.reset( bullet.position.x, bullet.position.y );
 	      explosion.play( 'explode', 30, false, true );
+
+	      return false;
 	    }
 	  }
 
 	  var _collisionHandler = function ( bullet, enemy ) {
 	    enemy.health -= 20;
 	    bullet.kill();
-	    _check( enemy, bullet );
+	    if ( _check( enemy, bullet ) ) {
+	      game.guiManager.addScore( 1000 );
+	    }
 	  }
 
 	  var update = function () {
@@ -1255,6 +1275,88 @@
 
 /***/ },
 /* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var SpriteGenerator = __webpack_require__( 8 );
+	var settings        = __webpack_require__( 2 );
+
+	function GuiManager( game ) {
+	  var _score            = 0;
+	  var _scoreText        = null;
+	  var _health           = settings.player.health;
+	  var _healthBackground = null;
+	  var _healthForeground = null;
+
+	  SpriteGenerator.add( function () {
+	    _scoreText = game.add.text(
+	        10,
+	        10,
+	        _textify( _score ),
+	        {
+	          font: '26px Arial',
+	          fill: '#fff',
+	          align: 'right',
+	          boundsAlignH: 'right',
+	          boundsAlignV: 'top'
+	        }
+	    );
+	    _scoreText.setTextBounds( 0, 0, settings.size.width - 20, 10 );
+
+	    _healthBackground = game.add.graphics();
+	    _healthBackground.beginFill( 0xFFFFFF, 0.2 );
+	    _healthBackground.drawRect(
+	        settings.size.width / 3.0,
+	        15,
+	        settings.size.width / 3.0,
+	        20
+	    );
+
+	    _redrawHealth( settings.player.health );
+	  }, 1000 );
+
+	  var _textify = function ( score ) {
+	    return parseInt( score ) + '';
+	  }
+
+	  var _redrawHealth = function ( health ) {
+	    if ( _healthForeground ) {
+	      _healthForeground.clear();
+	    } else {
+	      _healthForeground = game.add.graphics();
+	    }
+
+	    
+	    _healthForeground.beginFill( 0x11FF11, 0.8 );
+	    _healthForeground.drawRect(
+	        settings.size.width / 3.0,
+	        15,
+	        settings.size.width / 3.0 * ( health / settings.player.health ),
+	        20
+	    );
+	    _healthForeground.endFill();
+	  }
+
+	  var addScore = function ( add ) {
+	    _score += add;
+	    _scoreText.text = _textify( _score );
+	  }
+
+	  var subtractHealth = function ( minus ) {
+	    _health -= minus;
+	    _health = _health < 0 ? 0 : _health;
+	    _redrawHealth( _health );
+	  }
+
+	  return {
+	    addScore: addScore,
+	    subtractHealth: subtractHealth
+	  };
+	}
+
+	module.exports = GuiManager;
+
+/***/ },
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var SpriteGenerator = __webpack_require__( 8 );
@@ -1316,7 +1418,7 @@
 	module.exports = ProjectileManager;
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var SpriteGenerator = __webpack_require__( 8 );
@@ -1352,7 +1454,7 @@
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	function StageManager() {

@@ -1,6 +1,8 @@
+var settings = require( 'core/settings' );
+
 function Player() {
-  var health      = 100;
-  var maxSpeed    = 120;
+  var health      = settings.player.health;
+  var maxSpeed    = settings.player.maxSpeed;
   var boostSpeed  = 240;
   var boostFrames = 1;
 

@@ -1,6 +1,7 @@
 var BackgroundHandler = require( 'game/handlers/background-handler' );
 var PlayerHandler     = require( 'game/handlers/player-handler' );
 var EnemyHandler      = require( 'game/handlers/enemy-handler' );
+var GuiManager        = require( 'game/managers/gui-manager' );
 var SoundManager      = require( 'game/managers/sound-manager' );
 var ProjectileManager = require( 'game/managers/projectile-manager' );
 var ExplosionManager  = require( 'game/managers/explosion-manager' );
@@ -18,12 +19,13 @@ function Game( game ) {
     _backgroundHandler = new BackgroundHandler( this );
     _playerHandler     = new PlayerHandler( this );
     _enemyHandler      = new EnemyHandler( this );
-
+    
     this.player            = _playerHandler.getPlayer();
     this.stageManager      = new StageManager( this );
     this.projectileManager = new ProjectileManager( this );
     this.soundManager      = new SoundManager( this );
     this.explosionManager  = new ExplosionManager( this );
+    this.guiManager        = new GuiManager( this );
 
     SpriteGenerator.create();
   };

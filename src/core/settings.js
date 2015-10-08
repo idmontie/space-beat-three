@@ -13,6 +13,10 @@ module.exports = {
       health: 100
     }
   },
+  player: {
+    health: 100,
+    maxSpeed: 120
+  },
   size : {
     width: 600,
     height: 800

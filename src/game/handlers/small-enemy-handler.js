@@ -93,6 +93,7 @@ function SmallEnemyHandler( game ) {
   var _collisionHandler = function ( bullet, enemy ) {
     bullet.kill();
     _killEnemy( enemy );
+    game.guiManager.addScore( 400 );
   }
 
   var update = function () {

@@ -141,18 +141,24 @@ function MediumEnemyHandler( game ) {
   var _check = function ( enemy, bullet ) {
     if ( enemy.health <= 0 ) {
       _killEnemy( enemy );
+
+      return true;
     } else {
       explosion = game.explosionManager.smallExplosions.getFirstExists( false );
       game.soundManager.play( 'smallExplode' );
       explosion.reset( bullet.position.x, bullet.position.y );
       explosion.play( 'explode', 30, false, true );
+
+      return false;
     }
   }
 
   var _collisionHandler = function ( bullet, enemy ) {
     enemy.health -= 20;
     bullet.kill();
-    _check( enemy, bullet );
+    if ( _check( enemy, bullet ) ) {
+      game.guiManager.addScore( 1000 );
+    }
   }
 
   var update = function () {
