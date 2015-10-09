@@ -12,11 +12,12 @@ function SmallEnemyHandler( game ) {
     _enemies.enableBody = true;
     _enemies.physicsBodyType = Phaser.Physics.ARCADE;
     _enemies.createMultiple( settings.enemies.small.maxNumber, 'small-enemy' );
-    _enemies.setAll( 'scale.x', 0.5 );
-    _enemies.setAll( 'scale.y', 0.5 );
+    _enemies.setAll( 'scale.x', 0.3 );
+    _enemies.setAll( 'scale.y', 0.3 );
     _enemies.setAll( 'angle', 180 );
     _enemies.forEach( function ( enemy ) {
       enemy.anchor.setTo( 0.5, 0.5 );
+      enemy.body.setSize( 40, 60, 0, 0 );
     } );
   }, 200 );
 
@@ -120,8 +121,17 @@ function SmallEnemyHandler( game ) {
     );
   };
 
+  var render = function () {
+    if ( game.isDebug ) {
+      _enemies.forEachAlive( function ( member ) {
+        game.game.debug.body( member );
+      }, this );
+    }
+  }
+
   return {
-    update: update
+    update: update,
+    render: render
   }
 };
 

@@ -24,19 +24,12 @@ var PlayerEntity = function () {
       );
 
       player.entity.anchor.setTo( 0.5, 0.5 );
-      player.entity.scale.setTo( 0.5, 0.5 );
+      player.entity.scale.setTo( 0.3, 0.3 );
 
       game.physics.enable( player.entity, Phaser.Physics.ARCADE );
       player.entity.body.collideWorldBounds = true;
       player.entity.body.bounce.setTo( 0, 0 );
-      player.entity.body.setSize( 50, 131, 0, 5 );
-
-      _animations.left  = player.entity.animations.add('left', [4,4,3,3,2,2,2,1,1,1,1,0,0,0,0,0,0,1,1,1,1,2,2,2,3,3,4,4], 10, true);
-      _animations.init  = player.entity.animations.add('init', [5], 0, true);
-      _animations.right = player.entity.animations.add('right', [6,6,7,7,8,8,8,9,9,9,9,10,10,10,10,10,10,9,9,9,8,8,8,7,7,6,6], 10, true);
-      _animations.left.enableUpdate  = true;
-      _animations.init.enableUpdate  = true;
-      _animations.right.enableUpdate = true;
+      player.entity.body.setSize( 90, 181, 0, 0 );
 
       player.entity.play('init');
 
@@ -296,6 +289,15 @@ var PlayerEntity = function () {
     }
   };
 
+  var _addRender = function ( player, game ) {
+    player.render = function () {
+      if ( game.isDebug ) {
+        game.game.debug.bodyInfo( player.entity, 32, 32 );
+        game.game.debug.body( player.entity );
+      }
+    }
+  }
+
   /**
    * Decorate the player object with new
    * functionality that depends on the
@@ -306,6 +308,7 @@ var PlayerEntity = function () {
     _addMovement( player, game );
     _addFire( player, game );
     _addUpdate( player, game );
+    _addRender( player, game );
     _addCheck( player, game );
     _addHelperFunctions( player, game );
     _addCollisionHandlers( player, game );

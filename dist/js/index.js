@@ -117,7 +117,15 @@
 	      maxNumber: 5,
 	      spawnRate: 400,
 	      health: 100
+	    },
+	    large : {
+	      maxNumber: 1,
+	      spawnRate: 1000,
+	      health: 500
 	    }
+	  },
+	  game : {
+	    debug : true
 	  },
 	  player: {
 	    health: 100,
@@ -164,9 +172,7 @@
 	  this.load.image('background2', 'assets/sprites/parallax0002.png');
 	  this.load.spritesheet(
 	    'starfighter',
-	    'assets/sprites/fighter-spritesheet.png',
-	    95,
-	    151
+	    'assets/sprites/player0000.png'
 	  );
 	  this.load.spritesheet(
 	    'short-beam',
@@ -176,15 +182,15 @@
 	  );
 	  this.load.spritesheet(
 	    'small-enemy',
-	    'assets/sprites/enemy0000.png',
-	    64,
-	    64
+	    'assets/sprites/enemy0001.png'
 	  );
 	  this.load.spritesheet(
 	    'medium-enemy',
-	    'assets/sprites/enemy0001.png',
-	    85,
-	    85
+	    'assets/sprites/enemy0002.png'
+	  );
+	  this.load.spritesheet(
+	    'large-enemy',
+	    'assets/sprites/enemy0003.png'
 	  );
 	  this.load.spritesheet(
 	    'enemy-beam',
@@ -254,13 +260,14 @@
 	var BackgroundHandler = __webpack_require__( 7 );
 	var PlayerHandler     = __webpack_require__( 9 );
 	var EnemyHandler      = __webpack_require__( 14 );
-	var GuiManager        = __webpack_require__( 17 );
+	var GuiManager        = __webpack_require__( 18 );
 	var SoundManager      = __webpack_require__( 11 );
-	var ProjectileManager = __webpack_require__( 18 );
-	var ExplosionManager  = __webpack_require__( 19 );
-	var StageManager      = __webpack_require__( 20 );
+	var ProjectileManager = __webpack_require__( 19 );
+	var ExplosionManager  = __webpack_require__( 20 );
+	var StageManager      = __webpack_require__( 21 );
 	var SpriteGenerator   = __webpack_require__( 8 );
-	var PubSub            = __webpack_require__( 21 );
+	var PubSub            = __webpack_require__( 22 );
+	var settings          = __webpack_require__( 2 );
 
 	function Game( game ) {
 	  var _backgroundHandler;
@@ -268,6 +275,10 @@
 	  var _enemyHandler;
 
 	  var create = function () {
+	    if ( settings.game.debug ) {
+	      this.isDebug = settings.game.debug;
+	    }
+
 	    this.physics.startSystem( Phaser.Physics.ARCADE );
 
 	    _backgroundHandler = new BackgroundHandler( this );
@@ -292,7 +303,8 @@
 	  };
 
 	  var render = function () {
-
+	    _playerHandler.render();
+	    _enemyHandler.render();
 	  };
 
 	  return {
@@ -383,7 +395,6 @@
 	  }
 
 	  var create = function () {
-	    console.log( _order );
 	    _.each( _order, function ( entry ) {
 	      entry.callback();
 	    } );
@@ -423,12 +434,17 @@
 	    _player.update();
 	  };
 
+	  var render = function () {
+	    _player.render();
+	  };
+
 	  var getPlayer = function () {
 	    return _player;
 	  }
 
 	  return {
 	    update: update,
+	    render: render,
 	    getPlayer : getPlayer
 	  }
 	}
@@ -466,19 +482,12 @@
 	      );
 
 	      player.entity.anchor.setTo( 0.5, 0.5 );
-	      player.entity.scale.setTo( 0.5, 0.5 );
+	      player.entity.scale.setTo( 0.3, 0.3 );
 
 	      game.physics.enable( player.entity, Phaser.Physics.ARCADE );
 	      player.entity.body.collideWorldBounds = true;
 	      player.entity.body.bounce.setTo( 0, 0 );
-	      player.entity.body.setSize( 50, 131, 0, 5 );
-
-	      _animations.left  = player.entity.animations.add('left', [4,4,3,3,2,2,2,1,1,1,1,0,0,0,0,0,0,1,1,1,1,2,2,2,3,3,4,4], 10, true);
-	      _animations.init  = player.entity.animations.add('init', [5], 0, true);
-	      _animations.right = player.entity.animations.add('right', [6,6,7,7,8,8,8,9,9,9,9,10,10,10,10,10,10,9,9,9,8,8,8,7,7,6,6], 10, true);
-	      _animations.left.enableUpdate  = true;
-	      _animations.init.enableUpdate  = true;
-	      _animations.right.enableUpdate = true;
+	      player.entity.body.setSize( 90, 181, 0, 0 );
 
 	      player.entity.play('init');
 
@@ -738,6 +747,15 @@
 	    }
 	  };
 
+	  var _addRender = function ( player, game ) {
+	    player.render = function () {
+	      if ( game.isDebug ) {
+	        game.game.debug.bodyInfo( player.entity, 32, 32 );
+	        game.game.debug.body( player.entity );
+	      }
+	    }
+	  }
+
 	  /**
 	   * Decorate the player object with new
 	   * functionality that depends on the
@@ -748,6 +766,7 @@
 	    _addMovement( player, game );
 	    _addFire( player, game );
 	    _addUpdate( player, game );
+	    _addRender( player, game );
 	    _addCheck( player, game );
 	    _addHelperFunctions( player, game );
 	    _addCollisionHandlers( player, game );
@@ -920,22 +939,32 @@
 /* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var SmallEnemyHandler = __webpack_require__( 15 );
+	var SmallEnemyHandler  = __webpack_require__( 15 );
 	var MediumEnemyHandler = __webpack_require__( 16 );
+	var LargeEnemyHandler  = __webpack_require__( 17 );
 
 	function EnemyHandler( game ) {
 	  var _numberOfLargeEnemies = 0;
 	  
 	  var _smallEnemyHandler  = new SmallEnemyHandler( game );
 	  var _mediumEnemyHandler = new MediumEnemyHandler( game );
+	  var _largeEnemyHandler  = new LargeEnemyHandler( game );
 
 	  var update = function () {
 	    _smallEnemyHandler.update();
 	    _mediumEnemyHandler.update();
+	    _largeEnemyHandler.update();
 	  };
 
+	  var render = function () {
+	    _smallEnemyHandler.render();
+	    _mediumEnemyHandler.render();
+	    _largeEnemyHandler.render();
+	  }
+
 	  return {
-	    update : update
+	    update : update,
+	    render : render
 	  }
 	}
 
@@ -959,11 +988,12 @@
 	    _enemies.enableBody = true;
 	    _enemies.physicsBodyType = Phaser.Physics.ARCADE;
 	    _enemies.createMultiple( settings.enemies.small.maxNumber, 'small-enemy' );
-	    _enemies.setAll( 'scale.x', 0.5 );
-	    _enemies.setAll( 'scale.y', 0.5 );
+	    _enemies.setAll( 'scale.x', 0.3 );
+	    _enemies.setAll( 'scale.y', 0.3 );
 	    _enemies.setAll( 'angle', 180 );
 	    _enemies.forEach( function ( enemy ) {
 	      enemy.anchor.setTo( 0.5, 0.5 );
+	      enemy.body.setSize( 40, 60, 0, 0 );
 	    } );
 	  }, 200 );
 
@@ -1067,8 +1097,17 @@
 	    );
 	  };
 
+	  var render = function () {
+	    if ( game.isDebug ) {
+	      _enemies.forEachAlive( function ( member ) {
+	        game.game.debug.body( member );
+	      }, this );
+	    }
+	  }
+
 	  return {
-	    update: update
+	    update: update,
+	    render: render
 	  }
 	};
 
@@ -1098,6 +1137,7 @@
 	    _enemies.setAll( 'angle', 180 );
 	    _enemies.forEach( function ( enemy ) {
 	      enemy.anchor.setTo( 0.5, 0.5 );
+	      enemy.body.setSize( 58, 75, 0, 0 );
 	    } );
 	  }, 200 );
 
@@ -1267,8 +1307,17 @@
 	    );
 	  };
 
+	  var render = function () {
+	    if ( game.isDebug ) {
+	      _enemies.forEachAlive( function ( member ) {
+	        game.game.debug.body( member );
+	      }, this );
+	    }
+	  }
+
 	  return {
-	    update: update
+	    update: update,
+	    render: render
 	  }
 	};
 
@@ -1277,6 +1326,186 @@
 
 /***/ },
 /* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var settings = __webpack_require__( 2 );
+	var SpriteGenerator = __webpack_require__( 8 );
+
+	function LargeEnemyHandler( game ) {
+	  var _random    = game.rnd;
+	  var _spawnRate = settings.enemies.large.spawnRate;
+	  var _count     = 0;
+	  var _enemies   = null;
+
+	  SpriteGenerator.add( function () {
+	    _enemies = game.add.group();
+	    _enemies.enableBody = true;
+	    _enemies.physicsBodyType = Phaser.Physics.ARCADE;
+	    _enemies.createMultiple( settings.enemies.large.maxNumber, 'large-enemy' );
+	    _enemies.setAll( 'scale.x', 0.7 );
+	    _enemies.setAll( 'scale.y', 0.7 );
+	    _enemies.setAll( 'angle', 90 );
+	    _enemies.forEach( function ( enemy ) {
+	      enemy.anchor.setTo( 0.5, 0.5 );
+	      enemy.body.setSize( 258, 75, 0, 0 );
+	    } );
+	  }, 200 );
+
+	  var _createLargeEnemy = function () {
+	    var enemy = _enemies.getFirstExists( false );
+
+	    if ( enemy ) {
+	      if ( enemy.lastTweenA ) {
+	        game.tweens.remove( enemy.lastTweenA );
+	      }
+	      if ( enemy.lastTweenB ) {
+	        game.tweens.remove( enemy.lastTweenB );
+	      }
+
+	      enemy.reset(
+	          _random.between( -10, settings.size.width + 10 ),
+	          _random.between( -10, -20 )
+	      );
+
+	      enemy.health = settings.enemies.large.health;
+	      var targetY = _random.between( 90, 200 );
+	      var targetX = _random.between(
+	          settings.size.width / 2 - 100,
+	          settings.size.width / 2 + 100
+	      );
+	      var tweenA = game.add.tween( enemy ).to( { 
+	          x: targetX,
+	          y: targetY
+	        },
+	        7000,
+	        Phaser.Easing.Sinusoidal.Out,
+	        true
+	      );
+
+	      var tweenB = game.add.tween( enemy ).to( {
+	          x: targetX + _random.pick( [-20, -10, 10, 20] )
+	        },
+	        5000,
+	        Phaser.Easing.Linear.None,
+	        false,
+	        0,
+	        -1,
+	        true
+	      );
+
+	      tweenA.chain(tweenB);
+
+	      enemy.lastTweenA = tweenA;
+	      enemy.lastTweenB = tweenB;
+	    }
+	  };
+
+	  var _killEnemy = function ( enemy ) {
+	    enemy.kill();
+	  
+	    var explosion = game.explosionManager.explosions.getFirstExists( false );
+	    explosion.reset( enemy.position.x, enemy.position.y );
+	    explosion.play( 'explode', 30, false, true );
+	    game.soundManager.play( 'smallExplode' );
+	  }
+
+	  var _shoot = function () {
+	    _enemies.forEach( function ( enemy ) {
+	      if ( typeof enemy.shootTimer != 'undefined' ) {
+	        enemy.shootTimer++;
+	      } else {
+	        enemy.shootTimer = 0;
+	      }
+
+	      if ( enemy.alive && enemy.shootTimer > 100 ) {
+	        if ( enemy.shootTimer > 140 ) {
+	          enemy.shootTimer = 0;  
+	        }
+
+	        if ( enemy.shootTimer % 3 === 0 ) {
+	          //  Grab the first bullet we can from the pool
+	          var bullet = game.projectileManager.enemy.bullets.getFirstExists( false );
+	          // TODO different sound
+	          game.soundManager.play( 'laser' );
+
+	          if ( bullet ) {
+	            //  And fire it
+	            bullet.reset( enemy.x, enemy.y + 8 );
+	            game.player.rotateObjectTowards( bullet, true, 0 );
+	            bullet.body.velocity.x = Math.cos( bullet.rotation ) * 300;
+	            bullet.body.velocity.y = Math.sin( bullet.rotation ) * 300;
+	          }
+	        }
+	      }
+	    } );
+	  }
+
+	  var _check = function ( enemy, bullet ) {
+	    if ( enemy.health <= 0 ) {
+	      _killEnemy( enemy );
+
+	      return true;
+	    } else {
+	      explosion = game.explosionManager.smallExplosions.getFirstExists( false );
+	      game.soundManager.play( 'smallExplode' );
+	      explosion.reset( bullet.position.x, bullet.position.y );
+	      explosion.play( 'explode', 30, false, true );
+
+	      return false;
+	    }
+	  }
+
+	  var _collisionHandler = function ( bullet, enemy ) {
+	    enemy.health -= 20;
+	    bullet.kill();
+	    if ( _check( enemy, bullet ) ) {
+	      game.pubsub.publish( 'score.add', 1000 );
+	    }
+	  }
+
+	  var update = function () {
+	    if ( game.stageManager.isStage( 3 ) ) {
+	      if ( _count < settings.enemies.large.maxNumber ) {
+	        if ( _random.between( 0, _spawnRate ) < 1 ) {
+	          _spawnRate = settings.enemies.large.spawnRate;
+
+	          _createLargeEnemy();
+	        } else {
+	          _spawnRate -= 1;
+	        }
+	      }
+	    }
+
+	    _shoot();
+
+	    game.physics.arcade.overlap(
+	        game.projectileManager.player.bullets,
+	        _enemies,
+	        _collisionHandler,
+	        null,
+	        this
+	    );
+	  };
+
+	  var render = function () {
+	    if ( game.isDebug ) {
+	      _enemies.forEachAlive( function ( member ) {
+	        game.game.debug.body( member );
+	      }, this );
+	    }
+	  }
+
+	  return {
+	    update: update,
+	    render: render
+	  }
+	};
+
+	module.exports = LargeEnemyHandler;
+
+
+/***/ },
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var SpriteGenerator = __webpack_require__( 8 );
@@ -1359,7 +1588,7 @@
 	module.exports = GuiManager;
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var SpriteGenerator = __webpack_require__( 8 );
@@ -1421,7 +1650,7 @@
 	module.exports = ProjectileManager;
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var SpriteGenerator = __webpack_require__( 8 );
@@ -1457,11 +1686,11 @@
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports) {
 
 	function StageManager() {
-	  var _stage = 2;
+	  var _stage = 3;
 
 	  var isStage = function ( stage ) {
 	    return _stage >= stage;
@@ -1475,7 +1704,7 @@
 	module.exports = StageManager;
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports) {
 
 	function PubSub() {

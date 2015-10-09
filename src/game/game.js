@@ -8,6 +8,7 @@ var ExplosionManager  = require( 'game/managers/explosion-manager' );
 var StageManager      = require( 'game/managers/stage-manager' );
 var SpriteGenerator   = require( 'game/generators/sprite-generator' );
 var PubSub            = require( 'framework/pubsub/pubsub' );
+var settings          = require( 'core/settings' );
 
 function Game( game ) {
   var _backgroundHandler;
@@ -15,6 +16,10 @@ function Game( game ) {
   var _enemyHandler;
 
   var create = function () {
+    if ( settings.game.debug ) {
+      this.isDebug = settings.game.debug;
+    }
+
     this.physics.startSystem( Phaser.Physics.ARCADE );
 
     _backgroundHandler = new BackgroundHandler( this );
@@ -39,7 +44,8 @@ function Game( game ) {
   };
 
   var render = function () {
-
+    _playerHandler.render();
+    _enemyHandler.render();
   };
 
   return {

@@ -18,12 +18,17 @@ function PlayerHandler( game ) {
     _player.update();
   };
 
+  var render = function () {
+    _player.render();
+  };
+
   var getPlayer = function () {
     return _player;
   }
 
   return {
     update: update,
+    render: render,
     getPlayer : getPlayer
   }
 }

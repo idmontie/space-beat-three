@@ -10,9 +10,7 @@ Preloader.prototype.preload = function () {
   this.load.image('background2', 'assets/sprites/parallax0002.png');
   this.load.spritesheet(
     'starfighter',
-    'assets/sprites/fighter-spritesheet.png',
-    95,
-    151
+    'assets/sprites/player0000.png'
   );
   this.load.spritesheet(
     'short-beam',
@@ -22,15 +20,15 @@ Preloader.prototype.preload = function () {
   );
   this.load.spritesheet(
     'small-enemy',
-    'assets/sprites/enemy0000.png',
-    64,
-    64
+    'assets/sprites/enemy0001.png'
   );
   this.load.spritesheet(
     'medium-enemy',
-    'assets/sprites/enemy0001.png',
-    85,
-    85
+    'assets/sprites/enemy0002.png'
+  );
+  this.load.spritesheet(
+    'large-enemy',
+    'assets/sprites/enemy0003.png'
   );
   this.load.spritesheet(
     'enemy-beam',

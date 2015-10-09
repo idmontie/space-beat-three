@@ -26,7 +26,6 @@ var SpriteGenerator = (function () {
   }
 
   var create = function () {
-    console.log( _order );
     _.each( _order, function ( entry ) {
       entry.callback();
     } );

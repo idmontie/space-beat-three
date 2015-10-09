@@ -6,3 +6,4 @@ dist/assets/music/temp-*
 /.coverdata/
 /coverage/
 /debug/
+/dist/assets/old-sprites/

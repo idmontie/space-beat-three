@@ -11,7 +11,15 @@ module.exports = {
       maxNumber: 5,
       spawnRate: 400,
       health: 100
+    },
+    large : {
+      maxNumber: 1,
+      spawnRate: 1000,
+      health: 500
     }
+  },
+  game : {
+    debug : true
   },
   player: {
     health: 100,

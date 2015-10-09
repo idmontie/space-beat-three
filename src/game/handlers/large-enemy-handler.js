@@ -1,9 +1,9 @@
 var settings = require( 'core/settings' );
 var SpriteGenerator = require( 'game/generators/sprite-generator' );
 
-function MediumEnemyHandler( game ) {
+function LargeEnemyHandler( game ) {
   var _random    = game.rnd;
-  var _spawnRate = settings.enemies.medium.spawnRate;
+  var _spawnRate = settings.enemies.large.spawnRate;
   var _count     = 0;
   var _enemies   = null;
 
@@ -11,17 +11,17 @@ function MediumEnemyHandler( game ) {
     _enemies = game.add.group();
     _enemies.enableBody = true;
     _enemies.physicsBodyType = Phaser.Physics.ARCADE;
-    _enemies.createMultiple( settings.enemies.medium.maxNumber, 'medium-enemy' );
-    _enemies.setAll( 'scale.x', 0.5 );
-    _enemies.setAll( 'scale.y', 0.5 );
-    _enemies.setAll( 'angle', 180 );
+    _enemies.createMultiple( settings.enemies.large.maxNumber, 'large-enemy' );
+    _enemies.setAll( 'scale.x', 0.7 );
+    _enemies.setAll( 'scale.y', 0.7 );
+    _enemies.setAll( 'angle', 90 );
     _enemies.forEach( function ( enemy ) {
       enemy.anchor.setTo( 0.5, 0.5 );
-      enemy.body.setSize( 58, 75, 0, 0 );
+      enemy.body.setSize( 258, 75, 0, 0 );
     } );
   }, 200 );
 
-  var _createMediumEnemy = function () {
+  var _createLargeEnemy = function () {
     var enemy = _enemies.getFirstExists( false );
 
     if ( enemy ) {
@@ -37,7 +37,7 @@ function MediumEnemyHandler( game ) {
           _random.between( -10, -20 )
       );
 
-      enemy.health = settings.enemies.medium.health;
+      enemy.health = settings.enemies.large.health;
       var targetY = _random.between( 90, 200 );
       var targetX = _random.between(
           settings.size.width / 2 - 100,
@@ -87,57 +87,28 @@ function MediumEnemyHandler( game ) {
         enemy.shootTimer = 0;
       }
 
-      if ( enemy.alive && enemy.shootTimer > 500 ) {
-        enemy.shootTimer = 0;
+      if ( enemy.alive && enemy.shootTimer > 100 ) {
+        if ( enemy.shootTimer > 140 ) {
+          enemy.shootTimer = 0;  
+        }
 
-        for ( var firedBullet = 0; firedBullet < 6; firedBullet++ ) {
+        if ( enemy.shootTimer % 3 === 0 ) {
           //  Grab the first bullet we can from the pool
-          enemyBullet = game.projectileManager.enemy.missiles.getFirstExists( false );
+          var bullet = game.projectileManager.enemy.bullets.getFirstExists( false );
           // TODO different sound
           game.soundManager.play( 'laser' );
 
-          if ( enemyBullet ) {
+          if ( bullet ) {
             //  And fire it
-            enemyBullet.reset( enemy.x, enemy.y + 8 );
-            enemyBullet.body.velocity.x = 300;
-            if ( firedBullet > 2 ) {
-              enemyBullet.body.velocity.x = -300;
-            }
-
-            enemyBullet.body.velocity.y = -50 + ( firedBullet % 3 ) * 25;
-            enemyBullet.angle = ( 270 + 60 * firedBullet  ) % 360;
+            bullet.reset( enemy.x, enemy.y + 8 );
+            game.player.rotateObjectTowards( bullet, true, 0 );
+            bullet.body.velocity.x = Math.cos( bullet.rotation ) * 300;
+            bullet.body.velocity.y = Math.sin( bullet.rotation ) * 300;
           }
         }
       }
     } );
   }
-
-  var _rotateMissilesTowardPlayer = function () {
-    var missiles = game.projectileManager.enemy.missiles;
-
-    missiles.forEach( function ( missile ) {
-      if ( missile.alive ) {
-        game.player.rotateObjectTowards(
-            missile,
-            false,
-            0,
-            1
-        );
-
-        var newX = ( missile.body.velocity.x + Math.cos( missile.rotation ) * 100 ) / 2.0;
-        var newY = ( missile.body.velocity.y + Math.sin( missile.rotation ) * 300 ) / 2.0;
-        var oldY = missile.body.velocity.y;
-
-
-        missile.body.velocity.x = newX;
-        missile.body.velocity.y = Math.max( oldY, newY );
-
-        if ( missile.position.y > game.player.entity.position.y + _random.between( 30, 100 ) ) {
-          game.projectileManager.killMissile( missile );
-        }
-      }
-    } );
-  };
 
   var _check = function ( enemy, bullet ) {
     if ( enemy.health <= 0 ) {
@@ -163,12 +134,12 @@ function MediumEnemyHandler( game ) {
   }
 
   var update = function () {
-    if ( game.stageManager.isStage( 2 ) ) {
-      if ( _count < settings.enemies.medium.maxNumber ) {
+    if ( game.stageManager.isStage( 3 ) ) {
+      if ( _count < settings.enemies.large.maxNumber ) {
         if ( _random.between( 0, _spawnRate ) < 1 ) {
-          _spawnRate = settings.enemies.medium.spawnRate;
+          _spawnRate = settings.enemies.large.spawnRate;
 
-          _createMediumEnemy();
+          _createLargeEnemy();
         } else {
           _spawnRate -= 1;
         }
@@ -176,7 +147,6 @@ function MediumEnemyHandler( game ) {
     }
 
     _shoot();
-    _rotateMissilesTowardPlayer();
 
     game.physics.arcade.overlap(
         game.projectileManager.player.bullets,
@@ -201,4 +171,4 @@ function MediumEnemyHandler( game ) {
   }
 };
 
-module.exports = MediumEnemyHandler;
+module.exports = LargeEnemyHandler;
