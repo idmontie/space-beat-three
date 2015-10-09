@@ -7,6 +7,7 @@ var ProjectileManager = require( 'game/managers/projectile-manager' );
 var ExplosionManager  = require( 'game/managers/explosion-manager' );
 var StageManager      = require( 'game/managers/stage-manager' );
 var SpriteGenerator   = require( 'game/generators/sprite-generator' );
+var PubSub            = require( 'framework/pubsub/pubsub' );
 
 function Game( game ) {
   var _backgroundHandler;
@@ -20,6 +21,7 @@ function Game( game ) {
     _playerHandler     = new PlayerHandler( this );
     _enemyHandler      = new EnemyHandler( this );
     
+    this.pubsub            = new PubSub();
     this.player            = _playerHandler.getPlayer();
     this.stageManager      = new StageManager( this );
     this.projectileManager = new ProjectileManager( this );

@@ -157,7 +157,7 @@ function MediumEnemyHandler( game ) {
     enemy.health -= 20;
     bullet.kill();
     if ( _check( enemy, bullet ) ) {
-      game.guiManager.addScore( 1000 );
+      game.pubsub.publish( 'score.add', 1000 );
     }
   }
 

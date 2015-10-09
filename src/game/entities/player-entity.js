@@ -149,7 +149,7 @@ var PlayerEntity = function () {
       }
 
       if ( player.entity.alive ) {
-        game.guiManager.addScore( 0.03 );
+        game.pubsub.publish( 'score.add', 0.03 );
 
         if ( _burstCooldown === 0 && _notMoving ) {
           if ( player.entity.body.velocity.x != 0 ) {
@@ -209,7 +209,7 @@ var PlayerEntity = function () {
     _missileCollisionHandler = ( function ( player ) {
       return function ( entity, missile ) {
         game.projectileManager.killMissile( missile );
-        game.guiManager.subtractHealth( 30 );
+        game.pubsub.publish( 'health.subtract', 30 );
         player.health -= 30;
         player.check( missile );
       };
@@ -218,7 +218,7 @@ var PlayerEntity = function () {
     _bulletCollisionHandler = ( function ( player ) {
       return function ( entity, bullet ) {
         bullet.kill();
-        game.guiManager.subtractHealth( 10 );
+        game.pubsub.publish( 'health.subtract', 10 );
         player.health -= 10;
         player.check( bullet );
       };
@@ -226,7 +226,7 @@ var PlayerEntity = function () {
 
     _missileBulletCollisionHandler = ( function ( player ) {
       return function ( missile, bullet ) {
-        game.guiManager.addScore( 100 );
+        game.pubsub.publish( 'score.add', 100 );
         bullet.kill();
         game.projectileManager.killMissile( missile );
       }

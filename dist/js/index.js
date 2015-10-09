@@ -260,6 +260,7 @@
 	var ExplosionManager  = __webpack_require__( 19 );
 	var StageManager      = __webpack_require__( 20 );
 	var SpriteGenerator   = __webpack_require__( 8 );
+	var PubSub            = __webpack_require__( 21 );
 
 	function Game( game ) {
 	  var _backgroundHandler;
@@ -273,6 +274,7 @@
 	    _playerHandler     = new PlayerHandler( this );
 	    _enemyHandler      = new EnemyHandler( this );
 	    
+	    this.pubsub            = new PubSub();
 	    this.player            = _playerHandler.getPlayer();
 	    this.stageManager      = new StageManager( this );
 	    this.projectileManager = new ProjectileManager( this );
@@ -589,7 +591,7 @@
 	      }
 
 	      if ( player.entity.alive ) {
-	        game.guiManager.addScore( 0.03 );
+	        game.pubsub.publish( 'score.add', 0.03 );
 
 	        if ( _burstCooldown === 0 && _notMoving ) {
 	          if ( player.entity.body.velocity.x != 0 ) {
@@ -649,7 +651,7 @@
 	    _missileCollisionHandler = ( function ( player ) {
 	      return function ( entity, missile ) {
 	        game.projectileManager.killMissile( missile );
-	        game.guiManager.subtractHealth( 30 );
+	        game.pubsub.publish( 'health.subtract', 30 );
 	        player.health -= 30;
 	        player.check( missile );
 	      };
@@ -658,7 +660,7 @@
 	    _bulletCollisionHandler = ( function ( player ) {
 	      return function ( entity, bullet ) {
 	        bullet.kill();
-	        game.guiManager.subtractHealth( 10 );
+	        game.pubsub.publish( 'health.subtract', 10 );
 	        player.health -= 10;
 	        player.check( bullet );
 	      };
@@ -666,7 +668,7 @@
 
 	    _missileBulletCollisionHandler = ( function ( player ) {
 	      return function ( missile, bullet ) {
-	        game.guiManager.addScore( 100 );
+	        game.pubsub.publish( 'score.add', 100 );
 	        bullet.kill();
 	        game.projectileManager.killMissile( missile );
 	      }
@@ -1038,7 +1040,7 @@
 	  var _collisionHandler = function ( bullet, enemy ) {
 	    bullet.kill();
 	    _killEnemy( enemy );
-	    game.guiManager.addScore( 400 );
+	    game.pubsub.publish( 'score.add', 400 );
 	  }
 
 	  var update = function () {
@@ -1236,7 +1238,7 @@
 	    enemy.health -= 20;
 	    bullet.kill();
 	    if ( _check( enemy, bullet ) ) {
-	      game.guiManager.addScore( 1000 );
+	      game.pubsub.publish( 'score.add', 1000 );
 	    }
 	  }
 
@@ -1336,21 +1338,22 @@
 	    _healthForeground.endFill();
 	  }
 
-	  var addScore = function ( add ) {
+	  var _addScore = function ( e, add ) {
 	    _score += add;
 	    _scoreText.text = _textify( _score );
 	  }
 
-	  var subtractHealth = function ( minus ) {
+	  var _subtractHealth = function ( e, minus ) {
 	    _health -= minus;
 	    _health = _health < 0 ? 0 : _health;
 	    _redrawHealth( _health );
 	  }
 
-	  return {
-	    addScore: addScore,
-	    subtractHealth: subtractHealth
-	  };
+	  game.pubsub.subscribe( 'score.add', _addScore );
+	  game.pubsub.subscribe( 'health.subtract', _subtractHealth );
+
+	  return {};
+
 	}
 
 	module.exports = GuiManager;
@@ -1470,6 +1473,50 @@
 	}
 
 	module.exports = StageManager;
+
+/***/ },
+/* 21 */
+/***/ function(module, exports) {
+
+	function PubSub() {
+	  var topics = {};
+	  var subUid = -1;
+
+	  var publish = function ( topic, args ) {
+	    if ( ! topics[ topic ] ) {
+	      return false;
+	    }
+
+	    var subscribers = topics[ topic ];
+	    var len = subscribers ? subscribers.length : 0;
+
+	    while ( len-- ) {
+	      subscribers[ len ].func( topic, args );
+	    }
+	  }
+
+	  var subscribe = function ( topic, func ) {
+	    if ( ! topics[ topic ] ) {
+	      topics[ topic ] = [];
+	    }
+
+	    var token = ( ++ subUid ).toString();
+
+	    topics[ topic ].push( {
+	      token : token,
+	      func : func
+	    } );
+
+	    return token;
+	  }
+
+	  return {
+	    publish : publish,
+	    subscribe : subscribe
+	  }
+	}
+
+	module.exports = PubSub;
 
 /***/ }
 /******/ ]);

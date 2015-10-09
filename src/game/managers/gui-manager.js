@@ -57,21 +57,22 @@ function GuiManager( game ) {
     _healthForeground.endFill();
   }
 
-  var addScore = function ( add ) {
+  var _addScore = function ( e, add ) {
     _score += add;
     _scoreText.text = _textify( _score );
   }
 
-  var subtractHealth = function ( minus ) {
+  var _subtractHealth = function ( e, minus ) {
     _health -= minus;
     _health = _health < 0 ? 0 : _health;
     _redrawHealth( _health );
   }
 
-  return {
-    addScore: addScore,
-    subtractHealth: subtractHealth
-  };
+  game.pubsub.subscribe( 'score.add', _addScore );
+  game.pubsub.subscribe( 'health.subtract', _subtractHealth );
+
+  return {};
+
 }
 
 module.exports = GuiManager;
