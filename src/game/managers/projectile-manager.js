@@ -42,6 +42,10 @@ var ProjectileManager = function ( game ) {
     that.enemy.missiles.setAll('anchor.y', 0.5);
     that.enemy.missiles.setAll('outOfBoundsKill', true);
     that.enemy.missiles.setAll('checkWorldBounds', true);
+  }, function () {
+    that.enemy.missiles.destroy();
+    that.enemy.bullets.destroy();
+    that.player.bullets.destroy();
   }, 100);
 
   this.killMissile = function ( missile ) {

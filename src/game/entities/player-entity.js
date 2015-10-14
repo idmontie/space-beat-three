@@ -33,6 +33,8 @@ var PlayerEntity = function () {
 
       player.entity.play('init');
 
+    }, function () {
+      player.entity.destroy();
     }, 300 );
   };
 
@@ -240,7 +242,8 @@ var PlayerEntity = function () {
         x = player.entity.position.x;
         y = player.entity.position.y;
 
-        // TODO lose
+        // lose
+        game.stageManager.lose();
       } else {
         explosion = game.explosionManager.smallExplosions.getFirstExists( false );
         game.soundManager.play( 'smallExplode' );

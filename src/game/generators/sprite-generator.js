@@ -18,22 +18,32 @@ function locationOf(element, array, start, end) {
 var SpriteGenerator = (function () {
   var _order = [];
 
-  var add = function ( callback, order ) {
+  var add = function ( createCallback, rollbackCallback, order ) {
     insert( {
       order: order,
-      callback: callback
+      createCallback: createCallback,
+      rollbackCallback: rollbackCallback
     }, _order );
   }
 
   var create = function () {
     _.each( _order, function ( entry ) {
-      entry.callback();
+      entry.createCallback();
     } );
+  }
+
+  var destroy = function () {
+    _.each( _order, function ( entry ) {
+      entry.rollbackCallback();
+    } );
+
+    _order = [];
   }
 
   return {
     add: add,
-    create: create
+    create: create,
+    destroy: destroy
   }  
 })();
 

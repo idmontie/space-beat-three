@@ -33,6 +33,10 @@ function GuiManager( game ) {
     );
 
     _redrawHealth( settings.player.health );
+  }, function () {
+    _scoreText.destroy();
+    _healthForeground.clear();
+    _healthBackground.clear();
   }, 1000 );
 
   var _textify = function ( score ) {
@@ -71,7 +75,13 @@ function GuiManager( game ) {
   game.pubsub.subscribe( 'score.add', _addScore );
   game.pubsub.subscribe( 'health.subtract', _subtractHealth );
 
-  return {};
+  var getScore = function() {
+    return _score;
+  }
+
+  return {
+    getScore : getScore
+  };
 
 }
 

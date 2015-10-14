@@ -19,7 +19,7 @@ module.exports = {
     }
   },
   game : {
-    debug : true
+    debug : false
   },
   player: {
     health: 100,

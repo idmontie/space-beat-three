@@ -19,6 +19,8 @@ function MediumEnemyHandler( game ) {
       enemy.anchor.setTo( 0.5, 0.5 );
       enemy.body.setSize( 58, 75, 0, 0 );
     } );
+  }, function () {
+    _enemies.destroy();
   }, 200 );
 
   var _createMediumEnemy = function () {

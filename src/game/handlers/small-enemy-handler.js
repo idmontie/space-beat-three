@@ -19,6 +19,8 @@ function SmallEnemyHandler( game ) {
       enemy.anchor.setTo( 0.5, 0.5 );
       enemy.body.setSize( 40, 60, 0, 0 );
     } );
+  }, function () {
+    _enemies.destroy();
   }, 200 );
 
   var _createSmallEnemy = function () {

@@ -9,6 +9,10 @@ function BackgroundHandler( game ) {
     _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background2' ) );
     _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background1' ) );
     _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background0' ) );
+  }, function () {
+    _.each( _backgrounds, function ( background ) {
+      background.destroy();
+    });
   }, 0 );
 
   /**

@@ -34,6 +34,10 @@ function Game( game ) {
     this.explosionManager  = new ExplosionManager( this );
     this.guiManager        = new GuiManager( this );
 
+    this.reset = function () {
+      SpriteGenerator.destroy();
+    }
+
     SpriteGenerator.create();
   };
 

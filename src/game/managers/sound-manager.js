@@ -31,8 +31,13 @@ function SoundManager( game ) {
     }
   }
 
+  var stop = function () {
+    _audio.music.stop();
+  }
+
   return {
-    play : play
+    play : play,
+    stop: stop
   }
 };
 

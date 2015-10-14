@@ -24,6 +24,9 @@ function ExplosionManager( game ) {
     that.smallExplosions.forEach(function( explosion ) {
       explosion.animations.add('explode', [0,1,2]);
     }, this);
+  }, function () {
+    that.explosions.destroy();
+    that.smallExplosions.destroy();
   }, 400 );
 }
 

@@ -125,7 +125,7 @@
 	    }
 	  },
 	  game : {
-	    debug : true
+	    debug : false
 	  },
 	  player: {
 	    health: 100,
@@ -293,6 +293,10 @@
 	    this.explosionManager  = new ExplosionManager( this );
 	    this.guiManager        = new GuiManager( this );
 
+	    this.reset = function () {
+	      SpriteGenerator.destroy();
+	    }
+
 	    SpriteGenerator.create();
 	  };
 
@@ -332,6 +336,10 @@
 	    _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background2' ) );
 	    _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background1' ) );
 	    _backgrounds.push( game.add.tileSprite( 0, 0, settings.size.width, settings.size.height, 'background0' ) );
+	  }, function () {
+	    _.each( _backgrounds, function ( background ) {
+	      background.destroy();
+	    });
 	  }, 0 );
 
 	  /**
@@ -387,22 +395,32 @@
 	var SpriteGenerator = (function () {
 	  var _order = [];
 
-	  var add = function ( callback, order ) {
+	  var add = function ( createCallback, rollbackCallback, order ) {
 	    insert( {
 	      order: order,
-	      callback: callback
+	      createCallback: createCallback,
+	      rollbackCallback: rollbackCallback
 	    }, _order );
 	  }
 
 	  var create = function () {
 	    _.each( _order, function ( entry ) {
-	      entry.callback();
+	      entry.createCallback();
 	    } );
+	  }
+
+	  var destroy = function () {
+	    _.each( _order, function ( entry ) {
+	      entry.rollbackCallback();
+	    } );
+
+	    _order = [];
 	  }
 
 	  return {
 	    add: add,
-	    create: create
+	    create: create,
+	    destroy: destroy
 	  }  
 	})();
 
@@ -491,6 +509,8 @@
 
 	      player.entity.play('init');
 
+	    }, function () {
+	      player.entity.destroy();
 	    }, 300 );
 	  };
 
@@ -698,7 +718,8 @@
 	        x = player.entity.position.x;
 	        y = player.entity.position.y;
 
-	        // TODO lose
+	        // lose
+	        game.stageManager.lose();
 	      } else {
 	        explosion = game.explosionManager.smallExplosions.getFirstExists( false );
 	        game.soundManager.play( 'smallExplode' );
@@ -819,8 +840,13 @@
 	    }
 	  }
 
+	  var stop = function () {
+	    _audio.music.stop();
+	  }
+
 	  return {
-	    play : play
+	    play : play,
+	    stop: stop
 	  }
 	};
 
@@ -995,6 +1021,8 @@
 	      enemy.anchor.setTo( 0.5, 0.5 );
 	      enemy.body.setSize( 40, 60, 0, 0 );
 	    } );
+	  }, function () {
+	    _enemies.destroy();
 	  }, 200 );
 
 	  var _createSmallEnemy = function () {
@@ -1139,6 +1167,8 @@
 	      enemy.anchor.setTo( 0.5, 0.5 );
 	      enemy.body.setSize( 58, 75, 0, 0 );
 	    } );
+	  }, function () {
+	    _enemies.destroy();
 	  }, 200 );
 
 	  var _createMediumEnemy = function () {
@@ -1349,6 +1379,8 @@
 	      enemy.anchor.setTo( 0.5, 0.5 );
 	      enemy.body.setSize( 258, 75, 0, 0 );
 	    } );
+	  }, function () {
+	    _enemies.destroy();
 	  }, 200 );
 
 	  var _createLargeEnemy = function () {
@@ -1543,6 +1575,10 @@
 	    );
 
 	    _redrawHealth( settings.player.health );
+	  }, function () {
+	    _scoreText.destroy();
+	    _healthForeground.clear();
+	    _healthBackground.clear();
 	  }, 1000 );
 
 	  var _textify = function ( score ) {
@@ -1581,7 +1617,13 @@
 	  game.pubsub.subscribe( 'score.add', _addScore );
 	  game.pubsub.subscribe( 'health.subtract', _subtractHealth );
 
-	  return {};
+	  var getScore = function() {
+	    return _score;
+	  }
+
+	  return {
+	    getScore : getScore
+	  };
 
 	}
 
@@ -1635,6 +1677,10 @@
 	    that.enemy.missiles.setAll('anchor.y', 0.5);
 	    that.enemy.missiles.setAll('outOfBoundsKill', true);
 	    that.enemy.missiles.setAll('checkWorldBounds', true);
+	  }, function () {
+	    that.enemy.missiles.destroy();
+	    that.enemy.bullets.destroy();
+	    that.player.bullets.destroy();
 	  }, 100);
 
 	  this.killMissile = function ( missile ) {
@@ -1679,6 +1725,9 @@
 	    that.smallExplosions.forEach(function( explosion ) {
 	      explosion.animations.add('explode', [0,1,2]);
 	    }, this);
+	  }, function () {
+	    that.explosions.destroy();
+	    that.smallExplosions.destroy();
 	  }, 400 );
 	}
 
@@ -1689,15 +1738,27 @@
 /* 21 */
 /***/ function(module, exports) {
 
-	function StageManager() {
+	function StageManager( game ) {
 	  var _stage = 3;
 
 	  var isStage = function ( stage ) {
 	    return _stage >= stage;
 	  }
 
+	  var lose = function () {
+	    var score = game.guiManager.getScore();
+
+	    amplify.store( 'topScore', score );
+
+	    game.state.start( 'StartMenu' );
+
+	    game.reset();
+	    game.soundManager.stop();
+	  }
+
 	  return {
-	    isStage : isStage
+	    isStage : isStage,
+	    lose: lose
 	  }
 	}
 
