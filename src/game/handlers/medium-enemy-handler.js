@@ -25,6 +25,7 @@ function MediumEnemyHandler( game ) {
 
   var _createMediumEnemy = function () {
     var enemy = _enemies.getFirstExists( false );
+    _count++;
 
     if ( enemy ) {
       if ( enemy.lastTweenA ) {
@@ -74,6 +75,7 @@ function MediumEnemyHandler( game ) {
 
   var _killEnemy = function ( enemy ) {
     enemy.kill();
+    _count--;
   
     var explosion = game.explosionManager.explosions.getFirstExists( false );
     explosion.reset( enemy.position.x, enemy.position.y );
@@ -164,9 +166,19 @@ function MediumEnemyHandler( game ) {
     }
   }
 
+  var _maxNumberOfEnemies = function () {
+    var stage = game.stageManager.getStage();
+
+    var max = settings.enemies.medium.maxNumber * ( stage - 4 ) / 4.0;
+
+    max = Math.min( settings.enemies.medium.maxNumber, max );
+
+    return parseInt( max );
+  }
+
   var update = function () {
-    if ( game.stageManager.isStage( 2 ) ) {
-      if ( _count < settings.enemies.medium.maxNumber ) {
+    if ( game.stageManager.isStage( 5 ) ) {
+      if ( _count < _maxNumberOfEnemies() ) {
         if ( _random.between( 0, _spawnRate ) < 1 ) {
           _spawnRate = settings.enemies.medium.spawnRate;
 

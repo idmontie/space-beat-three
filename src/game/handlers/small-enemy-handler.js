@@ -25,6 +25,7 @@ function SmallEnemyHandler( game ) {
 
   var _createSmallEnemy = function () {
     var enemy = _enemies.getFirstExists( false );
+    _count++;
 
     if ( enemy ) {
       if ( enemy.lastTween ) {
@@ -89,6 +90,7 @@ function SmallEnemyHandler( game ) {
     _enemies.forEach( function ( enemy ) {
       if ( enemy.position.y > settings.size.height + 50 ) {
         enemy.kill();
+        _count--;
       }
     } );
   }
@@ -96,17 +98,30 @@ function SmallEnemyHandler( game ) {
   var _collisionHandler = function ( bullet, enemy ) {
     bullet.kill();
     _killEnemy( enemy );
+    _count--;
     game.pubsub.publish( 'score.add', 400 );
   }
 
-  var update = function () {
-    if ( _count < settings.enemies.small.maxNumber ) {
-      if ( _random.between( 0, _spawnRate ) < 1 ) {
-        _spawnRate = settings.enemies.small.spawnRate;
+  var _maxNumberOfEnemies = function () {
+    var stage = game.stageManager.getStage();
 
-        _createSmallEnemy();
-      } else {
-        _spawnRate -= 1;
+    var max = settings.enemies.small.maxNumber * stage / 3;
+
+    max = Math.min( settings.enemies.small.maxNumber, max );
+
+    return max;
+  }
+
+  var update = function () {
+    if ( game.stageManager.isStage( 1 ) ) {
+      if ( _count < _maxNumberOfEnemies() ) {
+        if ( _random.between( 0, _spawnRate ) < 1 ) {
+          _spawnRate = settings.enemies.small.spawnRate;
+
+          _createSmallEnemy();
+        } else {
+          _spawnRate -= 1;
+        }
       }
     }
 

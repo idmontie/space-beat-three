@@ -1027,6 +1027,7 @@
 
 	  var _createSmallEnemy = function () {
 	    var enemy = _enemies.getFirstExists( false );
+	    _count++;
 
 	    if ( enemy ) {
 	      if ( enemy.lastTween ) {
@@ -1091,6 +1092,7 @@
 	    _enemies.forEach( function ( enemy ) {
 	      if ( enemy.position.y > settings.size.height + 50 ) {
 	        enemy.kill();
+	        _count--;
 	      }
 	    } );
 	  }
@@ -1098,17 +1100,30 @@
 	  var _collisionHandler = function ( bullet, enemy ) {
 	    bullet.kill();
 	    _killEnemy( enemy );
+	    _count--;
 	    game.pubsub.publish( 'score.add', 400 );
 	  }
 
-	  var update = function () {
-	    if ( _count < settings.enemies.small.maxNumber ) {
-	      if ( _random.between( 0, _spawnRate ) < 1 ) {
-	        _spawnRate = settings.enemies.small.spawnRate;
+	  var _maxNumberOfEnemies = function () {
+	    var stage = game.stageManager.getStage();
 
-	        _createSmallEnemy();
-	      } else {
-	        _spawnRate -= 1;
+	    var max = settings.enemies.small.maxNumber * stage / 3;
+
+	    max = Math.min( settings.enemies.small.maxNumber, max );
+
+	    return max;
+	  }
+
+	  var update = function () {
+	    if ( game.stageManager.isStage( 1 ) ) {
+	      if ( _count < _maxNumberOfEnemies() ) {
+	        if ( _random.between( 0, _spawnRate ) < 1 ) {
+	          _spawnRate = settings.enemies.small.spawnRate;
+
+	          _createSmallEnemy();
+	        } else {
+	          _spawnRate -= 1;
+	        }
 	      }
 	    }
 
@@ -1173,6 +1188,7 @@
 
 	  var _createMediumEnemy = function () {
 	    var enemy = _enemies.getFirstExists( false );
+	    _count++;
 
 	    if ( enemy ) {
 	      if ( enemy.lastTweenA ) {
@@ -1222,6 +1238,7 @@
 
 	  var _killEnemy = function ( enemy ) {
 	    enemy.kill();
+	    _count--;
 	  
 	    var explosion = game.explosionManager.explosions.getFirstExists( false );
 	    explosion.reset( enemy.position.x, enemy.position.y );
@@ -1312,9 +1329,19 @@
 	    }
 	  }
 
+	  var _maxNumberOfEnemies = function () {
+	    var stage = game.stageManager.getStage();
+
+	    var max = settings.enemies.medium.maxNumber * ( stage - 4 ) / 4.0;
+
+	    max = Math.min( settings.enemies.medium.maxNumber, max );
+
+	    return parseInt( max );
+	  }
+
 	  var update = function () {
-	    if ( game.stageManager.isStage( 2 ) ) {
-	      if ( _count < settings.enemies.medium.maxNumber ) {
+	    if ( game.stageManager.isStage( 5 ) ) {
+	      if ( _count < _maxNumberOfEnemies() ) {
 	        if ( _random.between( 0, _spawnRate ) < 1 ) {
 	          _spawnRate = settings.enemies.medium.spawnRate;
 
@@ -1385,6 +1412,7 @@
 
 	  var _createLargeEnemy = function () {
 	    var enemy = _enemies.getFirstExists( false );
+	    _count++;
 
 	    if ( enemy ) {
 	      if ( enemy.lastTweenA ) {
@@ -1434,6 +1462,7 @@
 
 	  var _killEnemy = function ( enemy ) {
 	    enemy.kill();
+	    _count--;
 	  
 	    var explosion = game.explosionManager.explosions.getFirstExists( false );
 	    explosion.reset( enemy.position.x, enemy.position.y );
@@ -1495,9 +1524,19 @@
 	    }
 	  }
 
+	  var _maxNumberOfEnemies = function () {
+	    var stage = game.stageManager.getStage();
+
+	    var max = settings.enemies.large.maxNumber;
+
+	    max = Math.min( settings.enemies.large.maxNumber, max );
+
+	    return max;
+	  }
+
 	  var update = function () {
-	    if ( game.stageManager.isStage( 3 ) ) {
-	      if ( _count < settings.enemies.large.maxNumber ) {
+	    if ( game.stageManager.isStage( 7 ) ) {
+	      if ( _count < _maxNumberOfEnemies() ) {
 	        if ( _random.between( 0, _spawnRate ) < 1 ) {
 	          _spawnRate = settings.enemies.large.spawnRate;
 
@@ -1739,10 +1778,15 @@
 /***/ function(module, exports) {
 
 	function StageManager( game ) {
-	  var _stage = 3;
+	  var _stage = 0;
+	  var _score = 0;
 
 	  var isStage = function ( stage ) {
 	    return _stage >= stage;
+	  }
+
+	  var getStage = function () {
+	    return _stage;
 	  }
 
 	  var lose = function () {
@@ -1754,10 +1798,34 @@
 
 	    game.reset();
 	    game.soundManager.stop();
+	    _stage = 0;
 	  }
+
+	  game.pubsub.subscribe( 'score.add', function (e, score) {
+	    _score += score;
+
+	    if ( _score > 35000 ) {
+	      _stage = 8;
+	    } else if ( _score > 25000 ) {
+	      _stage = 7;
+	    } else if ( _score > 16000 ) {
+	      _stage = 6;
+	    } else if ( _score > 10000 ) {
+	      _stage = 5;
+	    } else if ( _score > 6000 ) {
+	      _stage = 4;
+	    } else if ( _score > 2000 ) {
+	      _stage = 3;
+	    } else if ( _score > 500 ) {
+	      _stage = 2;
+	    } else if ( _score > 5 ) {
+	      _stage = 1;
+	    }
+	  });
 
 	  return {
 	    isStage : isStage,
+	    getStage : getStage,
 	    lose: lose
 	  }
 	}

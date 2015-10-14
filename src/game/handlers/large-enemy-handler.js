@@ -25,6 +25,7 @@ function LargeEnemyHandler( game ) {
 
   var _createLargeEnemy = function () {
     var enemy = _enemies.getFirstExists( false );
+    _count++;
 
     if ( enemy ) {
       if ( enemy.lastTweenA ) {
@@ -74,6 +75,7 @@ function LargeEnemyHandler( game ) {
 
   var _killEnemy = function ( enemy ) {
     enemy.kill();
+    _count--;
   
     var explosion = game.explosionManager.explosions.getFirstExists( false );
     explosion.reset( enemy.position.x, enemy.position.y );
@@ -135,9 +137,19 @@ function LargeEnemyHandler( game ) {
     }
   }
 
+  var _maxNumberOfEnemies = function () {
+    var stage = game.stageManager.getStage();
+
+    var max = settings.enemies.large.maxNumber;
+
+    max = Math.min( settings.enemies.large.maxNumber, max );
+
+    return max;
+  }
+
   var update = function () {
-    if ( game.stageManager.isStage( 3 ) ) {
-      if ( _count < settings.enemies.large.maxNumber ) {
+    if ( game.stageManager.isStage( 7 ) ) {
+      if ( _count < _maxNumberOfEnemies() ) {
         if ( _random.between( 0, _spawnRate ) < 1 ) {
           _spawnRate = settings.enemies.large.spawnRate;
 
