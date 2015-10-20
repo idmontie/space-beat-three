@@ -148,7 +148,12 @@
 	}
 
 	Boot.prototype.create = function () {
-	  // TODO set up game settings
+	  this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+	  this.scale.minWidth = 320;
+	  this.scale.minHeight = 480;
+	  this.scale.maxWidth = 768;
+	  this.scale.maxHeight = 1152;
+	  this.scale.refresh();
 
 	  this.state.start( 'Preloader' );
 	}
@@ -822,6 +827,7 @@
 
 	  _audio.music = game.add.audio('background');
 	  _audio.music.loopFull(1);
+	  _audio.music.volume = 0.4;
 	  _audio.music.play();
 
 	  _audio.burst = game.add.audio( 'burst' );
