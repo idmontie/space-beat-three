@@ -1,9 +1,9 @@
 /node_modules/
 .DS_Store
 
-dist/assets/music/temp-*
+/assets/music/temp-*
 .coverrun
 /.coverdata/
 /coverage/
 /debug/
-/dist/assets/old-sprites/
+/assets/old-sprites/

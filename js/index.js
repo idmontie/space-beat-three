@@ -220,7 +220,7 @@
 	  this.load.audio('burst', ['assets/sounds/burst.wav']);
 	  this.load.audio('laser', ['assets/sounds/laser.wav']);
 	  this.load.audio('small-explode', ['assets/sounds/small-explode.wav']);
-	  this.load.audio('background', ['assets/music/temp-music.mp3', 'assets/music/temp-music.ogg']);
+	  this.load.audio('background', ['assets/music/main-music.mp3', 'assets/music/main-music.ogg']);
 	}
 
 	Preloader.prototype.update = function () {
