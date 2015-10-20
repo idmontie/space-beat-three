@@ -5,7 +5,12 @@ Boot.prototype.preload = function () {
 }
 
 Boot.prototype.create = function () {
-  // TODO set up game settings
+  this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+  this.scale.minWidth = 320;
+  this.scale.minHeight = 480;
+  this.scale.maxWidth = 768;
+  this.scale.maxHeight = 1152;
+  this.scale.refresh();
 
   this.state.start( 'Preloader' );
 }

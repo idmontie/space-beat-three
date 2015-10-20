@@ -3,6 +3,7 @@ function SoundManager( game ) {
 
   _audio.music = game.add.audio('background');
   _audio.music.loopFull(1);
+  _audio.music.volume = 0.4;
   _audio.music.play();
 
   _audio.burst = game.add.audio( 'burst' );
